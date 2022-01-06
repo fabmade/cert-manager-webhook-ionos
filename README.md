@@ -55,10 +55,10 @@ spec:
               apiUrl: https://api.hosting.ionos.com/dns/v1
               publicKeySecretRef:
                 key: IONOS_PUBLIC_PREFIX
-                name: ionos-secrets
+                name: ionos-secret
               secretKeySecretRef:
                 key: IONOS_SECRET
-                name: ionos-secrets
+                name: ionos-secret
 ```
 add prod issuer
 
@@ -80,19 +80,33 @@ metadata:
       - dns01:
           webhook:
             groupName: acme.fabmade.de
-            solverName: cert-manager-webhook-ionos
+            solverName: ionos
             config:
               apiUrl: https://api.hosting.ionos.com/dns/v1
               publicKeySecretRef:
                 key: IONOS_PUBLIC_PREFIX
-                name: ionos-secrets
+                name: ionos-secret
               secretKeySecretRef:
                 key: IONOS_SECRET
-                name: ionos-secrets
+                name: ionos-secret
 
 ```
 
 add ingress or certificate
+
+```
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: example-test-com
+  namespace: cert-manager
+spec:
+  dnsNames:
+    - '*.example.com'
+  issuerRef:
+    name: letsencrypt-ionos-staging
+  secretName: example-test-com-tls
+```
 
 ```
 apiVersion: networking.k8s.io/v1
