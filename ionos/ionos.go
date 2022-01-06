@@ -85,12 +85,13 @@ func (e *ionosSolver) CleanUp(ch *acme.ChallengeRequest) error {
 
 func (e *ionosSolver) Initialize(kubeClientConfig *rest.Config, stopCh <-chan struct{}) error {
 	go func() {
+		if e.server == nil {
+			return
+		}
 		if err := e.server.ListenAndServe(); err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		}
 	}()
-
-	//
 
 	k8sClient, err := kubernetes.NewForConfig(kubeClientConfig)
 	//klog.V(6).Infof("Input variable stopCh is %d length", len(stopCh))

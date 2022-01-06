@@ -16,7 +16,10 @@ func TestRunsSuite(t *testing.T) {
 	// snippet of valid configuration that should be included on the
 	// ChallengeRequest passed as part of the test cases.
 	//
+	zone = "example.com." // todo remove it
+
 	solver := ionos.NewMock("59351")
+
 	fixture := dns.NewFixture(solver,
 		dns.SetResolvedZone(zone),
 		dns.SetDNSServer("127.0.0.1:59351"),
@@ -24,6 +27,5 @@ func TestRunsSuite(t *testing.T) {
 		dns.SetManifestPath("testdata/ionos"),
 		dns.SetUseAuthoritative(false),
 	)
-
 	fixture.RunConformance(t)
 }

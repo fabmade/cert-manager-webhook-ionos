@@ -1,7 +1,7 @@
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 
-IMAGE_NAME := "fabmade/cert-manager-ionos"
+IMAGE_NAME := "fabmade/cert-manager-webhook-ionos"
 IMAGE_TAG := "latest"
 
 OUT := $(shell pwd)/_out
@@ -41,3 +41,12 @@ rendered-manifest.yaml:
         --set image.repository=$(IMAGE_NAME) \
         --set image.tag=$(IMAGE_TAG) \
         deploy/example-webhook > "$(OUT)/rendered-manifest.yaml"
+
+# Commands
+docker: docker-build docker-push
+
+docker-build:
+	docker build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
+
+docker-push:
+	docker push ${IMAGE_NAME}:${IMAGE_TAG}
