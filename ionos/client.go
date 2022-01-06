@@ -63,11 +63,11 @@ type Zone struct {
 	Type string `json:"type"`
 }
 
-func (e IonosClient) SetConfig(ctx context.Context, config *Config) {
+func (e *IonosClient) SetConfig(ctx context.Context, config *Config) {
 	e.config = config
 }
 
-func (e IonosClient) callDNSApi(url string, method string, body io.Reader, config *Config) ([]byte, error) {
+func (e *IonosClient) callDNSApi(url string, method string, body io.Reader, config *Config) ([]byte, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to execute request %v", err)
@@ -103,7 +103,7 @@ func (e IonosClient) callDNSApi(url string, method string, body io.Reader, confi
 	return nil, errors.New(text)
 }
 
-func (e IonosClient) GetZoneIdByName(ctx context.Context, name string) (string, error) {
+func (e *IonosClient) GetZoneIdByName(ctx context.Context, name string) (string, error) {
 
 	url := e.config.ApiUrl + "/zones"
 
@@ -131,7 +131,7 @@ func (e IonosClient) GetZoneIdByName(ctx context.Context, name string) (string, 
 	return "", fmt.Errorf("unable tu find zone %v", name)
 }
 
-func (e IonosClient) GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error) {
+func (e *IonosClient) GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error) {
 	url := e.config.ApiUrl + "/zones/" + zoneId + "?recordName=" + recordName + "&recordType=TXT"
 
 	// Get all DNS records
@@ -158,11 +158,11 @@ func (e IonosClient) GetRecordIdByName(ctx context.Context, zoneId string, recor
 	return recordId, nil
 }
 
-func (e IonosClient) GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error) {
+func (e *IonosClient) GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error) {
 	panic("implement me")
 }
 
-func (e IonosClient) AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error {
+func (e *IonosClient) AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error {
 	url := e.config.ApiUrl + "/zones/" + zoneId + "/records"
 
 	jsonString, err := json.Marshal(records)
@@ -175,13 +175,13 @@ func (e IonosClient) AddRecord(ctx context.Context, zoneId string, records Recor
 	return err
 }
 
-func (e IonosClient) DeleteRecord(ctx context.Context, zoneId string, recordId string) error {
+func (e *IonosClient) DeleteRecord(ctx context.Context, zoneId string, recordId string) error {
 	url := e.config.ApiUrl + "/zones/" + zoneId + "/records/" + recordId
 	_, err := e.callDNSApi(url, "DELETE", nil, e.config)
 	return err
 }
 
-func (e IonosClient) GetZoneById(ctx context.Context, id string) (string, error) {
+func (e *IonosClient) GetZoneById(ctx context.Context, id string) (string, error) {
 	panic("implement me")
 }
 

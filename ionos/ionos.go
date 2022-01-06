@@ -112,6 +112,11 @@ func (e *ionosSolver) clientInit(ch *acme.ChallengeRequest) (Config, error) {
 	}
 	config.ZoneName = cfg.ZoneName
 	config.ApiUrl = cfg.ApiUrl
+
+	if config.ApiUrl == "" {
+		config.ApiUrl = "https://api.hosting.ionos.com/dns/v1"
+	}
+
 	secretKey, err := e.getSecret(cfg.SecretKeySecretRef, ch.ResourceNamespace)
 	if err != nil {
 		return config, err

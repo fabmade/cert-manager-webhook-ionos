@@ -10,11 +10,11 @@ type MockClient struct {
 	txtRecords map[string]string
 }
 
-func (e MockClient) SetConfig(ctx context.Context, config *Config) {
+func (e *MockClient) SetConfig(ctx context.Context, config *Config) {
 	e.config = config
 }
 
-func (e MockClient) GetZoneIdByName(ctx context.Context, name string) (string, error) {
+func (e *MockClient) GetZoneIdByName(ctx context.Context, name string) (string, error) {
 	// Unmarshall response
 	zones := ZoneResponse{}
 	zones = append(zones, Zone{
@@ -33,7 +33,7 @@ func (e MockClient) GetZoneIdByName(ctx context.Context, name string) (string, e
 	return "", fmt.Errorf("unable tu find zone %v", name)
 }
 
-func (e MockClient) GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error) {
+func (e *MockClient) GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error) {
 
 	for key, _ := range e.txtRecords {
 		if key == recordName+"."+zoneId {
@@ -44,7 +44,7 @@ func (e MockClient) GetRecordIdByName(ctx context.Context, zoneId string, record
 	return "", fmt.Errorf("unable tu find record %v", recordName)
 }
 
-func (e MockClient) GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error) {
+func (e *MockClient) GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error) {
 	value, ok := e.txtRecords[recordId]
 	if ok {
 		return value, nil
@@ -53,7 +53,7 @@ func (e MockClient) GetRecordById(ctx context.Context, zoneId string, recordId s
 	}
 }
 
-func (e MockClient) AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error {
+func (e *MockClient) AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error {
 
 	for _, record := range records {
 		e.txtRecords[record.Name+"."+zoneId] = record.Content
@@ -62,12 +62,12 @@ func (e MockClient) AddRecord(ctx context.Context, zoneId string, records Record
 	return nil
 }
 
-func (e MockClient) DeleteRecord(ctx context.Context, zoneId string, recordId string) error {
+func (e *MockClient) DeleteRecord(ctx context.Context, zoneId string, recordId string) error {
 	delete(e.txtRecords, recordId)
 	return nil
 }
 
-func (e MockClient) GetZoneById(ctx context.Context, id string) (string, error) {
+func (e *MockClient) GetZoneById(ctx context.Context, id string) (string, error) {
 	panic("implement me")
 }
 
