@@ -1,0 +1,19 @@
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.{{ .Values.groupName }}
+  labels:
+    app: {{ include "cert-manager-webhook-ionos.name" . }}
+    chart: {{ include "cert-manager-webhook-ionos.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/{{ include "cert-manager-webhook-ionos.servingCertificate" . }}"
+spec:
+  group: {{ .Values.groupName }}
+  groupPriorityMinimum: 1000
+  versionPriority: 15
+  service:
+    name: {{ include "cert-manager-webhook-ionos.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+  version: v1alpha1
