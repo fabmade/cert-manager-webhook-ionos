@@ -11,7 +11,114 @@ see: https://cert-manager.io/docs/installation/kubernetes/
 
 ### Install webhook 
 
-`helm install cert-manager-webhook-ionos ./deploy/cert-manager-webhook-ionos`
+install helm chart
+
+`helm install cert-manager-webhook-ionos ./deploy/cert-manager-webhook-ionos -ncert-manager`
+
+add secret
+
+```
+apiVersion: v1
+stringData:
+IONOS_PUBLIC_PREFIX: <your-public-key>
+IONOS_SECRET: <your-private-key>
+kind: Secret
+metadata:
+name: ionos-secret
+namespace: cert-manager
+type: Opaque
+```
+
+add staging issuer
+
+```
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-ionos-staging
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: <your-email>
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-ionos-staging-key
+    # Enable the dns01 challenge provider
+    solvers:
+      - dns01:
+          webhook:
+            groupName: acme.fabmade.de
+            solverName: cert-manager-webhook-ionos
+            config:
+              apiUrl: https://api.hosting.ionos.com/dns/v1
+              publicKeySecretRef:
+                key: IONOS_PUBLIC_PREFIX
+                name: ionos-secrets
+              secretKeySecretRef:
+                key: IONOS_SECRET
+                name: ionos-secrets
+```
+add prod issuer
+
+```
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-ionos-prodspec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: <your-email-address>
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-ionos-prod
+    # Enable the dns01 challenge provider
+    solvers:
+      - dns01:
+          webhook:
+            groupName: acme.fabmade.de
+            solverName: cert-manager-webhook-ionos
+            config:
+              apiUrl: https://api.hosting.ionos.com/dns/v1
+              publicKeySecretRef:
+                key: IONOS_PUBLIC_PREFIX
+                name: ionos-secrets
+              secretKeySecretRef:
+                key: IONOS_SECRET
+                name: ionos-secrets
+
+```
+
+add ingress or certificate
+
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/issuer: letsencrypt-ionos-staging
+  name: example-wildcard-ingress
+spec:
+  rules:
+    - host: '*.example.com'
+      http:
+        paths:
+          - backend:
+              service:
+                name: mybackend
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - '*.example.com'
+      secretName: example-ionos-tls-prod
+```
+
 
 
 ### Running the test suite
