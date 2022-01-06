@@ -20,12 +20,12 @@ add secret
 ```
 apiVersion: v1
 stringData:
-IONOS_PUBLIC_PREFIX: <your-public-key>
-IONOS_SECRET: <your-private-key>
+  IONOS_PUBLIC_PREFIX: <your-public-key>
+  IONOS_SECRET: <your-private-key>
 kind: Secret
 metadata:
-name: ionos-secret
-namespace: cert-manager
+  name: ionos-secret
+  namespace: cert-manager
 type: Opaque
 ```
 
