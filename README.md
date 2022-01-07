@@ -50,7 +50,7 @@ spec:
       - dns01:
           webhook:
             groupName: acme.fabmade.de
-            solverName: cert-manager-webhook-ionos
+            solverName: ionos
             config:
               apiUrl: https://api.hosting.ionos.com/dns/v1
               publicKeySecretRef:
