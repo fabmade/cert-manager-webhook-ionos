@@ -132,7 +132,13 @@ spec:
       secretName: example-ionos-tls-prod
 ```
 
+share secrets accross namespaces (optional)
 
+https://cert-manager.io/docs/faq/kubed/
+
+### Uninstall webhook
+
+```helm uninstall cert-manager-webhook-ionos -ncert-manager```
 
 ### Running the test suite
 
