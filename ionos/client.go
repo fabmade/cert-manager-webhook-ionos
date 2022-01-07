@@ -125,7 +125,6 @@ func (e *IonosClient) GetZoneIdByName(ctx context.Context, name string) (string,
 		if zone.Name == name {
 			return zone.Id, nil
 		}
-		fmt.Printf(zone.Name)
 	}
 
 	return "", fmt.Errorf("unable tu find zone %v", name)

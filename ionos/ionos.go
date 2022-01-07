@@ -125,7 +125,7 @@ func (e *ionosSolver) clientInit(ch *acme.ChallengeRequest) (Config, error) {
 	if err != nil {
 		return config, err
 	}
-	config.ApiKey = secretKey + "." + publicKey
+	config.ApiKey = publicKey + "." + secretKey
 
 	e.ionosClient.SetConfig(e.context, &config)
 
