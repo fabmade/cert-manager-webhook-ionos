@@ -99,7 +99,6 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: example-test-com
-  namespace: cert-manager
 spec:
   dnsNames:
     - '*.example.com'
