@@ -92,7 +92,7 @@ metadata:
                     name: ionos-secret
 ```
 
-add ingress or certificate
+add ingress or certificate for example.com domain (replace it with your domain)
 
 ```
 apiVersion: cert-manager.io/v1
@@ -106,6 +106,8 @@ spec:
     name: letsencrypt-ionos-staging
   secretName: example-test-com-tls
 ```
+
+replace service "mybackend" with your own service
 
 ```
 apiVersion: networking.k8s.io/v1
