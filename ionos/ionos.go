@@ -176,7 +176,7 @@ func (e *ionosSolver) removeTxtRecord(zoneName string, ch *acme.ChallengeRequest
 		return fmt.Errorf("unable to find id for zone name `%s`; %v", zoneName, err)
 	}
 
-	name := recordName(ch.ResolvedFQDN, zoneName)
+	name := util.UnFqdn(ch.ResolvedFQDN)
 
 	//url := config.ApiUrl + "/zones/" + zoneId + "?recordName=" + name + "&recordType=TXT"
 
@@ -198,7 +198,7 @@ func (e *ionosSolver) removeTxtRecord(zoneName string, ch *acme.ChallengeRequest
 
 func (e *ionosSolver) addTxtRecord(zoneName string, ch *acme.ChallengeRequest) {
 
-	name := recordName(ch.ResolvedFQDN, zoneName)
+	name := util.UnFqdn(ch.ResolvedFQDN)
 	content := ch.Key
 	zoneId, err := e.ionosClient.GetZoneIdByName(e.context, zoneName)
 
@@ -221,15 +221,6 @@ func (e *ionosSolver) addTxtRecord(zoneName string, ch *acme.ChallengeRequest) {
 		klog.Error(err)
 	}
 	klog.Infof("Added TXT record successful")
-}
-
-func recordName(fqdn string, domain string) string {
-	name := util.UnFqdn(fqdn)
-	if idx := strings.Index(name, "."+domain); idx != -1 {
-		return name[:idx]
-	}
-
-	return name
 }
 
 func loadConfig(cfgJSON *extapi.JSON) (ionosDNSProviderConfig, error) {
