@@ -2,7 +2,7 @@ OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 
 IMAGE_NAME := "fabmade/cert-manager-webhook-ionos"
-IMAGE_TAG := "1.0.3"
+IMAGE_TAG := "1.0.4"
 
 OUT := $(shell pwd)/_out
 TEST := $(shell pwd)/_test
