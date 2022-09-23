@@ -11,9 +11,13 @@ see: https://cert-manager.io/docs/installation/kubernetes/
 
 ### Install webhook 
 
+Add helm repo
+
+`helm repo add cert-manager-webhook-ionos https://fabmade.github.io/cert-manager-webhook-ionos`
+
 install helm chart
 
-`helm install cert-manager-webhook-ionos ./deploy/cert-manager-webhook-ionos -ncert-manager`
+`helm install cert-manager-webhook-ionos cert-manager-webhook-ionos/cert-manager-webhook-ionos -ncert-manager`
 
 add secret
 
