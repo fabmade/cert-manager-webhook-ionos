@@ -71,29 +71,29 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: letsencrypt-ionos-prod
-  spec:
-      acme:
-        # The ACME server URL
-        server: https://acme-v02.api.letsencrypt.org/directory
-        # Email address used for ACME registration
-        email: <your-email-address>
-        # Name of a secret used to store the ACME account private key
-        privateKeySecretRef:
-          name: letsencrypt-ionos-prod
-        # Enable the dns01 challenge provider
-        solvers:
-          - dns01:
-              webhook:
-                groupName: acme.fabmade.de
-                solverName: ionos
-                config:
-                  apiUrl: https://api.hosting.ionos.com/dns/v1
-                  publicKeySecretRef:
-                    key: IONOS_PUBLIC_PREFIX
-                    name: ionos-secret
-                  secretKeySecretRef:
-                    key: IONOS_SECRET
-                    name: ionos-secret
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: <your-email-address>
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-ionos-prod
+    # Enable the dns01 challenge provider
+    solvers:
+      - dns01:
+          webhook:
+            groupName: acme.fabmade.de
+            solverName: ionos
+            config:
+              apiUrl: https://api.hosting.ionos.com/dns/v1
+              publicKeySecretRef:
+                key: IONOS_PUBLIC_PREFIX
+                name: ionos-secret
+              secretKeySecretRef:
+                key: IONOS_SECRET
+                name: ionos-secret
 ```
 
 add ingress or certificate for example.com domain (replace it with your domain)
