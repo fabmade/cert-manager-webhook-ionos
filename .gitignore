@@ -11,6 +11,23 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
 # Make artifacts
 _out
 _test
+
+# Ignore Golang files
+/shelf/
+/workspace.xml
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
+
+# Go workspace file
+go.work
+
