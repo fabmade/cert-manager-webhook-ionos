@@ -1,8 +1,8 @@
 package main
 
 import (
+	dns "github.com/cert-manager/cert-manager/test/acme"
 	"github.com/fabmade/cert-manager-webhook-ionos/ionos"
-	"github.com/jetstack/cert-manager/test/acme/dns"
 	"os"
 	"testing"
 )
