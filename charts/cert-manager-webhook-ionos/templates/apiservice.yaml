@@ -2,6 +2,7 @@ apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
   name: v1alpha1.{{ .Values.groupName }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     app: {{ include "cert-manager-webhook-ionos.name" . }}
     chart: {{ include "cert-manager-webhook-ionos.chart" . }}
