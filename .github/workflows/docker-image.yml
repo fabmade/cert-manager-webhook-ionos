@@ -4,40 +4,59 @@ on:
   push:
     branches: [master]
     tags:
-      - 'cert-manager-webhook-ionos-*'
+      - 'cert-manager-webhook-ionos-*.*.*'
 
 jobs:
-
-  build:
-
+  build-latest:
+    if: startsWith(github.ref, 'refs/heads/')
     runs-on: ubuntu-latest
-
     steps:
-    - name: checkout
-      uses: actions/checkout@v3
-    - name: set up quemu
-      uses: docker/setup-qemu-action@v1
-    - name: set up docker buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Extract version from tag
-      if: startsWith(github.ref, 'refs/tags/')
-      id: extract_tag
-      run: |
-        RAW_TAG=${GITHUB_REF#refs/tags/}
-        VERSION_TAG=${RAW_TAG##*-}
-        echo "TAG_NAME=$VERSION_TAG" >> $GITHUB_ENV
-    - name: Build and push
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./Dockerfile
-        platforms: linux/amd64, linux/arm64
-        push: true
-        tags: |
-          ${{ github.repository }}:latest
-          ${{ github.ref_type == 'tag' && env.TAG_NAME != '' && format('{0}:{1}', github.repository, env.TAG_NAME) || '' }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build and push latest
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ github.repository }}:latest
+
+  build-tag:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Extract version from tag
+        id: extract_tag
+        run: |
+          RAW_TAG=${GITHUB_REF#refs/tags/}
+          VERSION_TAG=${RAW_TAG##*-}
+          echo "TAG_NAME=$VERSION_TAG" >> $GITHUB_ENV
+      - name: Build and push version tag
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ github.repository }}:${{ env.TAG_NAME }}
