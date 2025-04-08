@@ -2,6 +2,15 @@ apiVersion: v1
 entries:
   cert-manager-webhook-ionos:
   - apiVersion: v1
+    appVersion: 1.2.2
+    created: "2025-04-08T05:35:13.341415323Z"
+    description: Allow cert-manager to solve DNS challenges using IONOS DNS API 1.0.0 https://developer.hosting.ionos.de/docs/dns
+    digest: 2cadc6736b387410c0158274d5c30fe2fe7cf1edaba851735133fbcc19c1cc4d
+    name: cert-manager-webhook-ionos
+    urls:
+    - https://github.com/fabmade/cert-manager-webhook-ionos/releases/download/cert-manager-webhook-ionos-1.2.2/cert-manager-webhook-ionos-1.2.2.tgz
+    version: 1.2.2
+  - apiVersion: v1
     appVersion: 1.2.1
     created: "2025-04-08T05:29:14.457505203Z"
     description: Allow cert-manager to solve DNS challenges using IONOS DNS API 1.0.0 https://developer.hosting.ionos.de/docs/dns
