@@ -33,11 +33,11 @@ metadata:
 type: Opaque
 ```
 
-add staging issuer
+add staging cluster issuer
 
 ```
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: letsencrypt-ionos-staging
 spec:
@@ -64,11 +64,11 @@ spec:
                 key: IONOS_SECRET
                 name: ionos-secret
 ```
-add prod issuer
+add prod cluster issuer
 
 ```
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: letsencrypt-ionos-prod
 spec:
@@ -103,11 +103,13 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: example-test-com
+  namespace: your-namespace
 spec:
   dnsNames:
     - '*.example.com'
   issuerRef:
     name: letsencrypt-ionos-staging
+    kind: ClusterIssuer
   secretName: example-test-com-tls
 ```
 
@@ -118,8 +120,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    cert-manager.io/issuer: letsencrypt-ionos-staging
+    cert-manager.io/cluster-issuer: letsencrypt-ionos-staging
   name: example-wildcard-ingress
+  namespace: your-namespace
 spec:
   rules:
     - host: '*.example.com'
@@ -137,10 +140,6 @@ spec:
         - '*.example.com'
       secretName: example-ionos-tls-prod
 ```
-
-share secrets accross namespaces (optional)
-
-https://cert-manager.io/docs/faq/kubed/
 
 ### Uninstall webhook
 
