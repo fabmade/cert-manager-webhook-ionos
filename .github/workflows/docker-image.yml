@@ -3,6 +3,8 @@ name: Docker Image CI & Push to docker
 on:
   push:
     branches: [master]
+    tags:
+      - 'cert-manager-webhook-ionos-*'
 
 jobs:
 
@@ -22,7 +24,13 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-        
+    - name: Extract version from tag
+      if: startsWith(github.ref, 'refs/tags/')
+      id: extract_tag
+      run: |
+        RAW_TAG=${GITHUB_REF#refs/tags/}
+        VERSION_TAG=${RAW_TAG##*-}
+        echo "TAG_NAME=$VERSION_TAG" >> $GITHUB_ENV
     - name: Build and push
       uses: docker/build-push-action@v2
       with:
@@ -30,4 +38,6 @@ jobs:
         file: ./Dockerfile
         platforms: linux/amd64, linux/arm64
         push: true
-        tags: ${{ github.repository }}:latest
+        tags: |
+          ${{ github.repository }}:latest
+          ${{ github.repository }}:${{ env.TAG_NAME }}
