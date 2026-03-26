@@ -1,5 +1,4 @@
-// package ionos contains a self-contained ionos of a webhook that passes the cert-manager
-// DNS conformance tests
+// Package ionos implements a cert-manager ACME DNS01 webhook solver for IONOS DNS.
 package ionos
 
 import (
@@ -11,7 +10,7 @@ import (
 	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"os"
 	"strings"
 	"sync"
@@ -23,10 +22,6 @@ import (
 )
 
 type ionosDNSProviderConfig struct {
-	// Change the two fields below according to the format of the configuration
-	// to be decoded.
-	// These fields will be set by users in the
-	// `issuer.spec.acme.dns01.providers.webhook.config` field.
 	PublicKeySecretRef corev1.SecretKeySelector `json:"publicKeySecretRef"`
 	SecretKeySecretRef corev1.SecretKeySelector `json:"secretKeySecretRef"`
 	ZoneName           string                   `json:"zoneName"`
@@ -61,9 +56,7 @@ func (e *ionosSolver) Present(ch *acme.ChallengeRequest) error {
 		return fmt.Errorf("unable to init client `%s`; %v", ch.ResourceNamespace, err)
 	}
 
-	e.addTxtRecord(config.ZoneName, ch)
-
-	return nil
+	return e.addTxtRecord(config.ZoneName, ch)
 }
 
 func (e *ionosSolver) CleanUp(ch *acme.ChallengeRequest) error {
@@ -94,7 +87,6 @@ func (e *ionosSolver) Initialize(kubeClientConfig *rest.Config, stopCh <-chan st
 	}()
 
 	k8sClient, err := kubernetes.NewForConfig(kubeClientConfig)
-	//klog.V(6).Infof("Input variable stopCh is %d length", len(stopCh))
 	if err != nil {
 		return err
 	}
@@ -144,13 +136,22 @@ func (e *ionosSolver) clientInit(ch *acme.ChallengeRequest) (Config, error) {
 func (e *ionosSolver) searchZoneName(searchZone string) (string, error) {
 	parts := strings.Split(searchZone, ".")
 	parts = parts[:len(parts)-1]
+	var lastErr error
 	for i := 0; i <= len(parts)-2; i++ {
 		name := strings.Join(parts[i:], ".")
-		zoneId, _ := e.ionosClient.GetZoneIdByName(e.context, name)
+		zoneId, err := e.ionosClient.GetZoneIdByName(e.context, name)
+		if err != nil {
+			klog.Warningf("failed to query zone %q: %v", name, err)
+			lastErr = err
+			continue
+		}
 		if zoneId != "" {
 			klog.Infof("Found ID with ZoneName: %s", name)
 			return name, nil
 		}
+	}
+	if lastErr != nil {
+		return "", fmt.Errorf("unable to find ionos dns zone with %q, last API error: %v", searchZone, lastErr)
 	}
 	return "", fmt.Errorf("unable to find ionos dns zone with: %s", searchZone)
 }
@@ -178,13 +179,12 @@ func (e *ionosSolver) removeTxtRecord(zoneName string, ch *acme.ChallengeRequest
 
 	name := util.UnFqdn(ch.ResolvedFQDN)
 
-	//url := config.ApiUrl + "/zones/" + zoneId + "?recordName=" + name + "&recordType=TXT"
-
 	recordId, err := e.ionosClient.GetRecordIdByName(e.context, zoneId, name)
 
 	if err != nil {
-		klog.Errorf("unable to get DNS records %v", err)
-		return fmt.Errorf("unable to get DNS records %v", err)
+		// Record may already be deleted — treat as success for idempotent cleanup
+		klog.Warningf("record %q not found, may already be deleted: %v", name, err)
+		return nil
 	}
 
 	err = e.ionosClient.DeleteRecord(e.context, zoneId, recordId)
@@ -196,14 +196,14 @@ func (e *ionosSolver) removeTxtRecord(zoneName string, ch *acme.ChallengeRequest
 	return nil
 }
 
-func (e *ionosSolver) addTxtRecord(zoneName string, ch *acme.ChallengeRequest) {
+func (e *ionosSolver) addTxtRecord(zoneName string, ch *acme.ChallengeRequest) error {
 
 	name := util.UnFqdn(ch.ResolvedFQDN)
 	content := ch.Key
 	zoneId, err := e.ionosClient.GetZoneIdByName(e.context, zoneName)
 
 	if err != nil {
-		klog.Errorf("unable to find id for zone name `%s`; %v", zoneName, err)
+		return fmt.Errorf("unable to find id for zone name `%s`; %v", zoneName, err)
 	}
 
 	request := RecordCreateRequest{}
@@ -218,9 +218,10 @@ func (e *ionosSolver) addTxtRecord(zoneName string, ch *acme.ChallengeRequest) {
 	err = e.ionosClient.AddRecord(e.context, zoneId, request)
 
 	if err != nil {
-		klog.Error(err)
+		return fmt.Errorf("unable to add TXT record; %v", err)
 	}
 	klog.Infof("Added TXT record successful")
+	return nil
 }
 
 func loadConfig(cfgJSON *extapi.JSON) (ionosDNSProviderConfig, error) {

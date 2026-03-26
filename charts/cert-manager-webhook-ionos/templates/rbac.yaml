@@ -131,7 +131,7 @@ subjects:
   - apiGroup: ""
     kind: ServiceAccount
     name: {{ include "cert-manager-webhook-ionos.fullname" . }}
-    namespace: {{ .Values.certManager.namespace }}
+    namespace: {{ .Release.Namespace }}
 ---
 
 apiVersion: rbac.authorization.k8s.io/v1

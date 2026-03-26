@@ -6,6 +6,8 @@
 # solve the DNS01 challenge.
 # This group name should be **unique**, hence using your own company's domain
 # here is recommended.
+replicaCount: 1
+
 groupName: acme.fabmade.de
 
 certManager:
@@ -41,3 +43,14 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Optional: Override DNS settings for the webhook pod.
+# Useful when cluster DNS cannot resolve external APIs (e.g. api.hosting.ionos.com).
+# Example for using public DNS:
+#   dnsPolicy: "None"
+#   dnsConfig:
+#     nameservers:
+#       - 1.1.1.1
+#       - 8.8.8.8
+dnsPolicy: ""
+dnsConfig: {}

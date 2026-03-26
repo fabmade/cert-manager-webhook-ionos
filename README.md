@@ -141,6 +141,18 @@ spec:
       secretName: example-ionos-tls-prod
 ```
 
+### Custom DNS settings
+
+If your cluster DNS cannot resolve `api.hosting.ionos.com` (e.g. when using internal DNS servers), you can override the webhook pod's DNS settings:
+
+```
+helm install cert-manager-webhook-ionos cert-manager-webhook-ionos/cert-manager-webhook-ionos \
+  -n cert-manager \
+  --set dnsPolicy=None \
+  --set dnsConfig.nameservers[0]=1.1.1.1 \
+  --set dnsConfig.nameservers[1]=8.8.8.8
+```
+
 ### Uninstall webhook
 
 ```helm uninstall cert-manager-webhook-ionos -ncert-manager```

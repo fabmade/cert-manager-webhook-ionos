@@ -4,18 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"k8s.io/klog"
 	"net/http"
 )
 
 type Client interface {
-	GetZoneIdByName(ctx context.Context, name string) (string, error)
-	GetZoneById(ctx context.Context, id string) (string, error)
 	SetConfig(ctx context.Context, config *Config)
+	GetZoneIdByName(ctx context.Context, name string) (string, error)
 	AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error
 	GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error)
 	GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error)
@@ -23,7 +19,8 @@ type Client interface {
 }
 
 type IonosClient struct {
-	config *Config
+	config     *Config
+	httpClient *http.Client
 }
 
 type RecordResponse struct {
@@ -67,53 +64,43 @@ func (e *IonosClient) SetConfig(ctx context.Context, config *Config) {
 	e.config = config
 }
 
-func (e *IonosClient) callDNSApi(url string, method string, body io.Reader, config *Config) ([]byte, error) {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return []byte{}, fmt.Errorf("unable to execute request %v", err)
+func (e *IonosClient) callDNSApi(ctx context.Context, url string, method string, body io.Reader) ([]byte, error) {
+	if e.config == nil {
+		return nil, fmt.Errorf("config missing")
 	}
 
-	if config == nil {
-		return []byte{}, fmt.Errorf("config missing")
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create request: %v", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-API-Key", config.ApiKey)
+	req.Header.Set("X-API-Key", e.config.ApiKey)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := e.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			klog.Fatal(err)
-		}
-	}()
-
-	respBody, _ := ioutil.ReadAll(resp.Body)
+	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
 		return respBody, nil
 	}
 
-	text := "Error calling API status:" + resp.Status + " url: " + url + " method: " + method
-	klog.Error(text)
-	return nil, errors.New(text)
+	return nil, fmt.Errorf("API error status:%s url:%s method:%s", resp.Status, url, method)
 }
 
 func (e *IonosClient) GetZoneIdByName(ctx context.Context, name string) (string, error) {
-
 	url := e.config.ApiUrl + "/zones"
 
-	zoneRecords, err := e.callDNSApi(url, "GET", nil, e.config)
+	zoneRecords, err := e.callDNSApi(ctx, url, "GET", nil)
 
 	if err != nil {
 		return "", fmt.Errorf("unable to get zone info %v", err)
 	}
 
-	// Unmarshall response
 	zones := ZoneResponse{}
 	readErr := json.Unmarshal(zoneRecords, &zones)
 
@@ -127,20 +114,18 @@ func (e *IonosClient) GetZoneIdByName(ctx context.Context, name string) (string,
 		}
 	}
 
-	return "", fmt.Errorf("unable tu find zone %v", name)
+	return "", fmt.Errorf("unable to find zone %v", name)
 }
 
 func (e *IonosClient) GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error) {
 	url := e.config.ApiUrl + "/zones/" + zoneId + "?recordName=" + recordName + "&recordType=TXT"
 
-	// Get all DNS records
-	dnsRecords, err := e.callDNSApi(url, "GET", nil, e.config)
+	dnsRecords, err := e.callDNSApi(ctx, url, "GET", nil)
 
 	if err != nil {
 		return "", fmt.Errorf("unable to get DNS records %v", err)
 	}
 
-	// Unmarshall response
 	records := RecordResponse{}
 	readErr := json.Unmarshal(dnsRecords, &records)
 
@@ -158,7 +143,7 @@ func (e *IonosClient) GetRecordIdByName(ctx context.Context, zoneId string, reco
 }
 
 func (e *IonosClient) GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error) {
-	panic("implement me")
+	return "", fmt.Errorf("GetRecordById not implemented")
 }
 
 func (e *IonosClient) AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error {
@@ -166,24 +151,20 @@ func (e *IonosClient) AddRecord(ctx context.Context, zoneId string, records Reco
 
 	jsonString, err := json.Marshal(records)
 	if err != nil {
-		fmt.Printf("Error: %s", err.Error())
-	} else {
-		fmt.Println(string(jsonString))
+		return fmt.Errorf("unable to marshal record request: %v", err)
 	}
-	_, err = e.callDNSApi(url, "POST", bytes.NewBuffer(jsonString), e.config)
+	_, err = e.callDNSApi(ctx, url, "POST", bytes.NewBuffer(jsonString))
 	return err
 }
 
 func (e *IonosClient) DeleteRecord(ctx context.Context, zoneId string, recordId string) error {
 	url := e.config.ApiUrl + "/zones/" + zoneId + "/records/" + recordId
-	_, err := e.callDNSApi(url, "DELETE", nil, e.config)
+	_, err := e.callDNSApi(ctx, url, "DELETE", nil)
 	return err
 }
 
-func (e *IonosClient) GetZoneById(ctx context.Context, id string) (string, error) {
-	panic("implement me")
-}
-
 func NewClient() Client {
-	return &IonosClient{}
+	return &IonosClient{
+		httpClient: &http.Client{},
+	}
 }

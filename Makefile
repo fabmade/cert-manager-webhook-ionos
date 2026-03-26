@@ -2,29 +2,26 @@ OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 
 IMAGE_NAME := "fabmade/cert-manager-webhook-ionos"
-IMAGE_TAG := "1.0.4"
+IMAGE_TAG := "1.3.0"
 
 OUT := $(shell pwd)/_out
 TEST := $(shell pwd)/_test
 
-KUBEBUILDER_VERSION := 2.3.2
-TEST_ASSET_KUBE_APISERVER := "$(TEST)/kubebuilder/bin/kube-apiserver"
-TEST_ASSET_ETCD := "$(TEST)/kubebuilder/bin/etcd"
-TEST_ASSET_KUBECTL := "$(TEST)/kubebuilder/bin/kubectl"
+K8S_VERSION := 1.28.3
+ENVTEST_BINDIR := $(TEST)/kubebuilder/bin/k8s/$(K8S_VERSION)-$(OS)-$(ARCH)
+TEST_ASSET_KUBE_APISERVER := "$(ENVTEST_BINDIR)/kube-apiserver"
+TEST_ASSET_ETCD := "$(ENVTEST_BINDIR)/etcd"
+TEST_ASSET_KUBECTL := "$(ENVTEST_BINDIR)/kubectl"
 
 $(shell mkdir -p "$(OUT)")
 
 test: _test/kubebuilder
 	TEST_ASSET_ETCD="$(TEST_ASSET_ETCD)" TEST_ASSET_KUBE_APISERVER="$(TEST_ASSET_KUBE_APISERVER)" TEST_ASSET_KUBECTL="$(TEST_ASSET_KUBECTL)" \
-	go test .
+	go test -v .
 
 _test/kubebuilder:
-	curl -fsSL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH).tar.gz -o kubebuilder-tools.tar.gz
-	mkdir -p $(TEST)/kubebuilder
-	tar -xvf kubebuilder-tools.tar.gz
-	mv kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH)/bin $(TEST)/kubebuilder/
-	rm kubebuilder-tools.tar.gz
-	rm -R kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH)
+	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	setup-envtest use $(K8S_VERSION) --bin-dir $(TEST)/kubebuilder/bin -p path
 
 clean: clean-kubebuilder
 

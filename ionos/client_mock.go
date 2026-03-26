@@ -3,11 +3,13 @@ package ionos
 import (
 	"context"
 	"fmt"
+	"sync"
 )
 
 type MockClient struct {
 	config     *Config
 	txtRecords map[string]string
+	mu         sync.RWMutex
 }
 
 func (e *MockClient) SetConfig(ctx context.Context, config *Config) {
@@ -15,7 +17,6 @@ func (e *MockClient) SetConfig(ctx context.Context, config *Config) {
 }
 
 func (e *MockClient) GetZoneIdByName(ctx context.Context, name string) (string, error) {
-	// Unmarshall response
 	zones := ZoneResponse{}
 	zones = append(zones, Zone{
 		Id:   name + ".",
@@ -27,48 +28,54 @@ func (e *MockClient) GetZoneIdByName(ctx context.Context, name string) (string, 
 		if zone.Name == name {
 			return zone.Id, nil
 		}
-		fmt.Printf(zone.Name)
 	}
 
-	return "", fmt.Errorf("unable tu find zone %v", name)
+	return "", fmt.Errorf("unable to find zone %v", name)
 }
 
 func (e *MockClient) GetRecordIdByName(ctx context.Context, zoneId string, recordName string) (string, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
-	for key, _ := range e.txtRecords {
-		if key == recordName+"."+zoneId {
+	fqdn := recordName + "."
+	for key := range e.txtRecords {
+		if key == fqdn {
 			return key, nil
 		}
 	}
 
-	return "", fmt.Errorf("unable tu find record %v", recordName)
+	return "", fmt.Errorf("unable to find record %v", recordName)
 }
 
 func (e *MockClient) GetRecordById(ctx context.Context, zoneId string, recordId string) (string, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
 	value, ok := e.txtRecords[recordId]
 	if ok {
 		return value, nil
-	} else {
-		return "", fmt.Errorf("unable tu find record %v", recordId)
 	}
+	return "", fmt.Errorf("unable to find record %v", recordId)
 }
 
 func (e *MockClient) AddRecord(ctx context.Context, zoneId string, records RecordCreateRequest) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
 	for _, record := range records {
-		e.txtRecords[record.Name+"."+zoneId] = record.Content
+		// Store with FQDN (trailing dot) to match DNS query format
+		e.txtRecords[record.Name+"."] = record.Content
 	}
 
 	return nil
 }
 
 func (e *MockClient) DeleteRecord(ctx context.Context, zoneId string, recordId string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	delete(e.txtRecords, recordId)
 	return nil
-}
-
-func (e *MockClient) GetZoneById(ctx context.Context, id string) (string, error) {
-	panic("implement me")
 }
 
 func NewMockClient() Client {
