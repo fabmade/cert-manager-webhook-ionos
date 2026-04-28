@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: "1.3.0"
+appVersion: "1.3.1"
 description: Allow cert-manager to solve DNS challenges using IONOS DNS API 1.0.2 https://developer.hosting.ionos.de/docs/dns
 name: cert-manager-webhook-ionos
-version: 1.3.0
+version: 1.3.1
